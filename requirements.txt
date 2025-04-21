@@ -1,2 +1,6 @@
 pytest
 flake8
+mrjob
+pandas
+nltk
+tqdm

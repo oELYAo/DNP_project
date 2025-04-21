@@ -1,0 +1,13 @@
+This is a simple test document for text mining.
+Another document with some positive sentiment. I love this project!
+A document with negative sentiment. This is terrible and frustrating.
+Neutral document that just states facts without emotion.
+This tweet-like text has @mentions and #hashtags that should be removed.
+A document with a URL https://example.com that should be cleaned.
+This document has punctuation, numbers (123), and special characters!@#$
+Short words a I to be should filtered out.
+An empty document.
+
+Multiple lines with
+different spacing patterns
+   to test   whitespace   handling. 
