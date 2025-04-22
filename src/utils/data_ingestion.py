@@ -9,11 +9,17 @@ import csv
 import json
 import os
 import re
+import sys
 from typing import Dict, Iterator, List, Union
 import logging
 
+# Add the parent directory to the path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from utils.logging_config import get_logger
+
 # Set up logger
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def read_records(path: str) -> Iterator[Dict[str, Union[str, int]]]:
@@ -39,6 +45,8 @@ def read_records(path: str) -> Iterator[Dict[str, Union[str, int]]]:
         raise FileNotFoundError(f"File not found: {path}")
     
     doc_id = 0  # For formats that don't have IDs
+    
+    logger.info(f"Reading records from {path} (format: {file_ext})")
     
     if file_ext == '.json':
         with open(path, 'r', encoding='utf-8') as file:
@@ -95,7 +103,10 @@ def read_records(path: str) -> Iterator[Dict[str, Union[str, int]]]:
                     doc_id += 1
     
     else:
+        logger.error(f"Unsupported file format: {file_ext}")
         raise ValueError(f"Unsupported file format: {file_ext}")
+    
+    logger.info(f"Finished reading records from {path}")
 
 
 def clean_text(text: str) -> str:
@@ -178,5 +189,11 @@ def load_and_preprocess(path: str) -> Iterator[Dict[str, Union[str, int, List[st
     Yields:
         Preprocessed documents with 'id', 'text', 'clean_text', and 'tokens' fields
     """
+    logger.info(f"Loading and preprocessing documents from {path}")
+    count = 0
+    
     for document in read_records(path):
-        yield preprocess_document(document) 
+        count += 1
+        yield preprocess_document(document)
+    
+    logger.info(f"Preprocessed {count} documents from {path}") 

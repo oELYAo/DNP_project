@@ -16,17 +16,7 @@ from typing import Dict, List, Union
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.data_ingestion import load_and_preprocess
-
-
-def setup_logging():
-    """Set up logging configuration."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler()
-        ]
-    )
+from utils.logging_config import get_logger
 
 
 def parse_args():
@@ -76,7 +66,7 @@ def process_and_output(
         limit (int, optional): Maximum number of documents to process
         verbose (bool, optional): Whether to enable verbose output
     """
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     
     if verbose:
         logger.setLevel(logging.DEBUG)
@@ -119,7 +109,6 @@ def process_and_output(
 
 def main():
     """Main function."""
-    setup_logging()
     args = parse_args()
     
     process_and_output(
