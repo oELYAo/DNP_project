@@ -22,22 +22,15 @@ from utils.logging_config import get_logger
 logger = get_logger(__name__)
 
 
-def read_records(path: str) -> Iterator[Dict[str, Union[str, int]]]:
-    """Reads records from different file formats and yields them as dictionaries.
-    
-    Supported formats:
-    - .json: Expects objects with "id" and "text" fields (or similar)
-    - .csv: Expects CSV with header row and a "text" column
-    - .txt: One document per line, generates IDs automatically
+def read_records(file_path):
+    """
+    Read records from a file based on its extension.
     
     Args:
-        path (str): Path to the input file
+        file_path: Path to the file
         
-    Yields:
-        Dict with 'id' and 'text' fields for each document
-        
-    Raises:
-        ValueError: If the file format is not supported
+    Returns:
+        Generator yielding records as dictionaries
     """
     file_ext = os.path.splitext(path)[1].lower()
     
@@ -101,6 +94,17 @@ def read_records(path: str) -> Iterator[Dict[str, Union[str, int]]]:
                 if line.strip():  # Skip empty lines
                     yield {'id': doc_id, 'text': line.strip()}
                     doc_id += 1
+
+    # For CSV files
+    elif file_path.endswith('.csv'):
+        import csv
+        with open(file_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for i, row in enumerate(reader):
+                # Convert empty ID to 0
+                if 'id' in row and (row['id'] == '' or row['id'] is None):
+                    row['id'] = 0
+                yield row
     
     else:
         logger.error(f"Unsupported file format: {file_ext}")
@@ -140,10 +144,11 @@ def clean_text(text: str) -> str:
 
 
 def tokenize(text: str) -> List[str]:
-    """Tokenizes the input text into words.
+    """
+    Tokenize text into individual words, removing stopwords.
     
     Args:
-        text (str): Input text to tokenize
+        text: Input text to tokenize
         
     Returns:
         List of tokens
@@ -151,11 +156,15 @@ def tokenize(text: str) -> List[str]:
     if not text:
         return []
     
-    # Simple whitespace-based tokenization
-    tokens = text.split()
+    # Clean the text first
+    cleaned = clean_text(text)
     
-    # Filter out empty tokens and very short ones (like single characters)
-    tokens = [token for token in tokens if len(token) > 1]
+    # Define stopwords to filter out
+    stopwords = ["a", "an", "the", "is", "are", "was", "were", "be", "been", 
+                "being", "in", "on", "at", "to", "for", "with", "by", "of"]
+    
+    # Split into tokens and filter out stopwords
+    tokens = [word for word in cleaned.split() if word not in stopwords]
     
     return tokens
 
