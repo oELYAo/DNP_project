@@ -1,7 +1,24 @@
 name: CI
 on: [push]
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Install pylint
+        run: pip install pylint
+      - name: Run pylint analysis
+        run: |
+          pylint_score=$(pylint --exit-zero src/ tests/ | grep -oP 'at \K\d+\.\d+')
+          echo "Pylint score: $pylint_score"
+          awk -v score="$pylint_score" 'BEGIN {exit !(score >= 5)}'
+
   test:
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
