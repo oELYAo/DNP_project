@@ -1,0 +1,7 @@
+{"id": 2001, "text": "This is a JSON document with an ID field", "clean_text": "this is a json document with an id field", "tokens": ["this", "is", "json", "document", "with", "an", "id", "field"]}
+{"id": 2002, "text": "Another JSON object with positive sentiment, excellent!", "clean_text": "another json object with positive sentiment excellent", "tokens": ["another", "json", "object", "with", "positive", "sentiment", "excellent"]}
+{"id": 2003, "text": "Negative sentiment in a JSON object, awful", "clean_text": "negative sentiment in a json object awful", "tokens": ["negative", "sentiment", "in", "json", "object", "awful"]}
+{"id": 2004, "text": "Just some neutral text in JSON format", "clean_text": "just some neutral text in json format", "tokens": ["just", "some", "neutral", "text", "in", "json", "format"]}
+{"id": 0, "text": "This JSON object has no ID so one should be generated", "clean_text": "this json object has no id so one should be generated", "tokens": ["this", "json", "object", "has", "no", "id", "so", "one", "should", "be", "generated"]}
+{"id": 2006, "text": "This JSON object has content instead of text", "clean_text": "this json object has content instead of text", "tokens": ["this", "json", "object", "has", "content", "instead", "of", "text"]}
+{"id": 2007, "text": "", "clean_text": "", "tokens": []}
