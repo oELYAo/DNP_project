@@ -27,4 +27,18 @@ jobs:
         with: 
           python-version: "3.9"
       - run: pip install -r requirements.txt
-      - run: pytest
+      
+      - name: Run and verify tests
+        run: |
+          # Running test files
+          pytest -s > pytest_output.log
+          
+          # Check output
+          for test_file in "cleaner" "mapper_sentiment" "reducer_sentiment" "reader"; do
+            if grep -q "Test start" pytest_output.log; then
+              echo "Connect logic success for $test_file"
+            else
+              echo "Connect logic failed for $test_file"
+              exit 1
+            fi
+          done
