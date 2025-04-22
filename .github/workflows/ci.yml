@@ -30,15 +30,14 @@ jobs:
       
       - name: Run and verify tests
         run: |
-          # Running test files
-          pytest -s > pytest_output.log
-          
-          # Check output
-          for test_file in "cleaner" "mapper_sentiment" "reducer_sentiment" "reader"; do
-            if grep -q "Test start" pytest_output.log; then
-              echo "Connect logic success for $test_file"
+          for test_file in "test_cleaner.py" "test_mapper_sentiment.py" "test_reducer_sentiment.py" "test_reader.py"; do
+            echo "▶️ Testing file $test_file"
+            output=$(pytest -s "tests/$test_file")
+            
+            if echo "$output" | grep -q "Test start"; then
+              echo "✅ Tested success for $test_file"
             else
-              echo "Connect logic failed for $test_file"
+              echo "❌ Test failed for $test_file: No 'Test start' message"
               exit 1
             fi
           done
