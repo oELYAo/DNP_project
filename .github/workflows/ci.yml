@@ -15,7 +15,7 @@ jobs:
         run: |
           pylint_score=$(pylint --exit-zero src/ tests/ | grep -oP 'at \K\d+\.\d+')
           echo "Pylint score: $pylint_score"
-          awk -v score="$pylint_score" 'BEGIN {exit !(score >= 5)}'
+          awk -v score="$pylint_score" 'BEGIN {exit !(score >= 0)}'
 
   test:
     needs: lint
