@@ -11,10 +11,10 @@ jobs:
           python-version: "3.9"
       - name: Install pylint
         run: pip install pylint
-      - name: Run pylint analysis
+      - name: Code linting...
         run: |
           pylint_score=$(pylint --exit-zero src/ tests/ | grep -oP 'at \K\d+\.\d+')
-          echo "Pylint score: $pylint_score"
+          echo "Linter score(out of 10): $pylint_score"
           awk -v score="$pylint_score" 'BEGIN {exit !(score >= 0)}'
 
   test:
@@ -31,11 +31,11 @@ jobs:
       - name: Run and verify tests
         run: |
           for test_file in "test_cleaner.py" "test_mapper_sentiment.py" "test_reducer_sentiment.py" "test_reader.py"; do
-            echo "▶️ Testing file $test_file"
+            echo "Testing file $test_file"
             output=$(pytest -s "tests/$test_file")
             
-            if echo "$output" | grep -q "Test start"; then
-              echo "✅ Tested success for $test_file"
+            if echo "$output" | grep -qi "Test start"; then
+              echo "■ Tested success for $test_file"
             else
               echo "❌ Test failed for $test_file: No 'Test start' message"
               exit 1
