@@ -31,7 +31,7 @@ jobs:
       - name: Run and verify tests
         run: |
           for test_file in "test_cleaner.py" "test_mapper_sentiment.py" "test_reducer_sentiment.py" "test_reader.py"; do
-            echo "Testing file `$test_file`"
+            echo "Testing file $test_file"
             output=$(pytest -s "tests/$test_file")
             echo "$output"
           done
