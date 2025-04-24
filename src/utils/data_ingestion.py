@@ -32,17 +32,17 @@ def read_records(file_path):
     Returns:
         Generator yielding records as dictionaries
     """
-    file_ext = os.path.splitext(path)[1].lower()
+    file_ext = os.path.splitext(file_path)[1].lower()
     
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"File not found: {path}")
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
     
     doc_id = 0  # For formats that don't have IDs
     
-    logger.info(f"Reading records from {path} (format: {file_ext})")
+    logger.info(f"Reading records from {file_path} (format: {file_ext})")
     
     if file_ext == '.json':
-        with open(path, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             for line in file:
                 try:
                     record = json.loads(line.strip())
@@ -67,7 +67,7 @@ def read_records(file_path):
                     continue
     
     elif file_ext == '.csv':
-        with open(path, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
                 # Check if 'text' column exists
@@ -84,33 +84,25 @@ def read_records(file_path):
                 
                 # Check if 'id' column exists, otherwise generate one
                 doc_id_value = row.get('id', doc_id)
+                # Convert empty ID to 0
+                if doc_id_value == '':
+                    doc_id_value = 0
                 doc_id += 1
                 
                 yield {'id': doc_id_value, 'text': row['text']}
     
     elif file_ext == '.txt':
-        with open(path, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             for line in file:
                 if line.strip():  # Skip empty lines
                     yield {'id': doc_id, 'text': line.strip()}
                     doc_id += 1
-
-    # For CSV files
-    elif file_path.endswith('.csv'):
-        import csv
-        with open(file_path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for i, row in enumerate(reader):
-                # Convert empty ID to 0
-                if 'id' in row and (row['id'] == '' or row['id'] is None):
-                    row['id'] = 0
-                yield row
     
     else:
         logger.error(f"Unsupported file format: {file_ext}")
         raise ValueError(f"Unsupported file format: {file_ext}")
     
-    logger.info(f"Finished reading records from {path}")
+    logger.info(f"Finished reading records from {file_path}")
 
 
 def clean_text(text: str) -> str:
@@ -161,10 +153,10 @@ def tokenize(text: str) -> List[str]:
     
     # Define stopwords to filter out
     stopwords = ["a", "an", "the", "is", "are", "was", "were", "be", "been", 
-                "being", "in", "on", "at", "to", "for", "with", "by", "of"]
+                "being", "in", "on", "at", "to", "for", "by", "of"]
     
-    # Split into tokens and filter out stopwords
-    tokens = [word for word in cleaned.split() if word not in stopwords]
+    # Split into tokens and filter out stopwords and single-letter words
+    tokens = [word for word in cleaned.split() if word not in stopwords and len(word) > 1]
     
     return tokens
 
@@ -205,4 +197,4 @@ def load_and_preprocess(path: str) -> Iterator[Dict[str, Union[str, int, List[st
         count += 1
         yield preprocess_document(document)
     
-    logger.info(f"Preprocessed {count} documents from {path}") 
+    logger.info(f"Preprocessed {count} documents from {path}")
