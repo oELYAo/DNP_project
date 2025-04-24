@@ -1,6 +1,6 @@
 pytest
 flake8
-mrjob
+mrjob==0.7.4
+nltk==3.8.1
 pandas
-nltk
 tqdm
