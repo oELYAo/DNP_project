@@ -137,7 +137,8 @@ def clean_text(text: str) -> str:
 
 def tokenize(text: str) -> List[str]:
     """
-    Tokenize text into individual words, removing stopwords.
+    Tokenize text into individual words, removing stopwords and numbers.
+    Also, remove '_' and '-' unless they are between two letters.
     
     Args:
         text: Input text to tokenize
@@ -155,8 +156,15 @@ def tokenize(text: str) -> List[str]:
     stopwords = ["a", "an", "the", "is", "are", "was", "were", "be", "been", 
                 "being", "in", "on", "at", "to", "for", "by", "of"]
     
-    # Split into tokens and filter out stopwords and single-letter words
-    tokens = [word for word in cleaned.split() if word not in stopwords and len(word) > 1]
+    tokens = []
+    for word in cleaned.split():
+        # Remove all digits from the word
+        word_no_digits = re.sub(r'\d+', '', word)
+        # Remove _ and - unless between two letters
+        word_cleaned = re.sub(r'(?<![a-zA-Z])[_-]+|[_-]+(?![a-zA-Z])', '', word_no_digits)
+        # Filter: not a stopword, longer than 1 char, and not empty after cleaning
+        if word_cleaned and word_cleaned not in stopwords and len(word_cleaned) > 1:
+            tokens.append(word_cleaned)
     
     return tokens
 
