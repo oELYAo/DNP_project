@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 .egg-info
 *.log
-/data/processed/
+data/processed/
+temp/
