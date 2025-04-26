@@ -18,6 +18,7 @@ jobs:
           awk -v score="$pylint_score" 'BEGIN {exit !(score >= 0)}'
 
   test:
+
     needs: lint
     runs-on: ubuntu-latest
     steps:
@@ -35,3 +36,62 @@ jobs:
             output=$(pytest -s "tests/$test_file")
             echo "$output"
           done
+          
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run linter (flake8)
+      run: |
+        pip install flake8
+        flake8 src
+
+    - name: Run unit tests
+      run: |
+        pip install pytest
+        pytest
+
+    # ------------------------------
+    # Hadoop Streaming WordCount
+    # ------------------------------
+    - name: Set up Java and Hadoop
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y openjdk-11-jdk wget unzip
+        wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+        tar -xzf hadoop-3.3.6.tar.gz
+        mv hadoop-3.3.6 $HOME/hadoop
+        echo "HADOOP_HOME=$HOME/hadoop" >> $GITHUB_ENV
+        echo "$HOME/hadoop/bin" >> $GITHUB_PATH
+        echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+
+    - name: Prepare WordCount test file
+      run: |
+        echo "foo bar foo" > sample.txt
+        $HOME/hadoop/bin/hadoop fs -mkdir -p /tmp/
+        $HOME/hadoop/bin/hadoop fs -put sample.txt /tmp/
+
+    - name: Run Hadoop Streaming WordCount
+      run: |
+        $HOME/hadoop/bin/hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
+          -input /tmp/sample.txt \
+          -output /tmp/sample_out \
+          -mapper src/mapreduce/mapper_wordcount.py \
+          -reducer src/mapreduce/reducer_wordcount.py
+
+    - name: Show WordCount output
+      run: |
+        $HOME/hadoop/bin/hadoop fs -cat /tmp/sample_out/part-*
