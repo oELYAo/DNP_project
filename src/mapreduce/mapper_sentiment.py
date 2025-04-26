@@ -1,33 +1,48 @@
-import subprocess
-import tempfile
-import os
+#!/usr/bin/env python3
+"""
+Mapper for the Sentiment Analysis job.
+
+This script reads input lines in the format of JSON with doc_id and text,
+calculates sentiment scores using a lexicon, and emits (doc_id, score) pairs.
+"""
+
+import sys
 import json
+import os
 
-def test_mapper_sentiment_basic():
-    # Создаём временный JSON-файл с doc_id и text
-    data = {"doc_id": "doc_0", "text": "I love sunshine and joy"}
+# Add the parent directory to the path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from utils.lexicon_loader import load_lexicon
+
+def main():
+    """Process each line from stdin and emit document sentiment scores."""
+    # Load the sentiment lexicon
+    lexicon_path = "afinn-111.txt"  # This will be distributed via -files
+    lexicon = load_lexicon(lexicon_path)
     
-    with tempfile.NamedTemporaryFile("w+", delete=False) as f:
-        f.write(json.dumps(data) + "\n")
-        f.seek(0)
-        input_path = f.name
+    for line in sys.stdin:
+        try:
+            # Parse the input line
+            record = json.loads(line.strip())
+            
+            # Extract doc_id and text
+            doc_id = record.get("doc_id", "unknown")
+            text = record.get("text", "")
+            
+            if not text:
+                continue
+            
+            # Calculate sentiment score
+            words = text.lower().split()
+            score = sum(lexicon.get(word, 0) for word in words)
+            
+            # Emit the result
+            print(f"{doc_id}\t{score}")
+            
+        except Exception as e:
+            sys.stderr.write(f"Error processing line: {e}\n")
+            continue
 
-    # Запускаем маппер с перенаправлением stdin
-    result = subprocess.run(
-        ["python3", "src/mapreduce/mapper_sentiment.py"],
-        stdin=open(input_path),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-
-    output = result.stdout.strip()
-    
-    # Проверка: начинается с doc_0 и содержит таб + число
-    assert output.startswith("doc_0\t")
-    parts = output.split("\t")
-    assert len(parts) == 2
-    assert parts[0] == "doc_0"
-    assert isinstance(int(parts[1]), int)
-
-    os.unlink(input_path)
+if __name__ == "__main__":
+    main()
