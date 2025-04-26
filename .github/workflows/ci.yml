@@ -66,15 +66,19 @@ jobs:
         sed -i 's/\r$//' src/mapreduce/reducer_wordcount.py
 
 
-    - name: Run Hadoop Streaming WordCount
+    - name: Run Hadoop Streaming with sample.csv
       run: |
+        cp data/sample/sample.csv ./sample.csv  # Подготовка локального лексикона
+        cp src/mapper_sentiment.py ./mapper_sentiment.py  # Убедись, что путь правильный
+        cp src/reducer_sentiment.py ./reducer_sentiment.py  # Тоже проверь путь
         $HOME/hadoop/bin/hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
-          -files /data/sample/sample.csv \
+          -files sample.csv#afinn-111.txt,mapper_sentiment.py,reducer_sentiment.py \
           -input /data/cleaned/* \
           -output /data/sentiment_output \
-          -mapper mapper_sentiment.py \
-          -combiner reducer_sentiment.py \
-          -reducer reducer_sentiment.py
+          -mapper "python3 mapper_sentiment.py" \
+          -combiner "python3 reducer_sentiment.py" \
+          -reducer "python3 reducer_sentiment.py"
+
 
     - name: Show WordCount output
       run: |
