@@ -85,6 +85,11 @@ jobs:
         sed -i 's/\r$//' src/mapreduce/mapper_wordcount.py
         sed -i 's/\r$//' src/mapreduce/reducer_wordcount.py
 
+    - name: Modifying data folders
+      run: |
+        hdfs dfs -chmod -R 755 /data/cleaned
+        hdfs dfs -chmod -R 755 /data/sentiment_output
+
 
     - name: Run Hadoop Streaming WordCount
       run: |

@@ -26,7 +26,7 @@ def run_hadoop_streaming(
     num_reducers: int = 2
 ) -> bool:
     """
-    Run a Hadoop streaming job.
+    Run a Hadoop streaming job. 
     
     Args:
         job_type (str): Type of job ('wordcount' or 'sentiment')
@@ -206,5 +206,16 @@ def main():
     # Exit with appropriate status
     sys.exit(0 if success else 1)
 
+def run_sentiment_job():
+    subprocess.run([
+        "hadoop", "jar", "/usr/lib/hadoop-mapreduce/hadoop-streaming.jar",
+        "-files", "lexicon.csv,mapper_sentiment.py,reducer_sentiment.py",
+        "-input", "/data/cleaned/",
+        "-output", "/data/sentiment_output",
+        "-mapper", "mapper_sentiment.py",
+        "-combiner", "reducer_sentiment.py",
+        "-reducer", "reducer_sentiment.py"
+    ])
+
 if __name__ == "__main__":
-    main()
+    run_sentiment_job()
