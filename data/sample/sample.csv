@@ -1,0 +1,7 @@
+id,text
+1001,"This is a CSV document with an ID field"
+1002,"Another CSV row with positive sentiment, great!"
+1003,"Negative sentiment in a CSV row, not good at all"
+1004,"Just some neutral text in CSV format"
+,This row has no ID so one should be generated
+1006," 
