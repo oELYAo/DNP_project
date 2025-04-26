@@ -89,19 +89,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    name: Test MapReduce Pipeline
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-
-jobs:
-  test-pipeline:
-    runs-on: ubuntu-latest
-
-    steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
