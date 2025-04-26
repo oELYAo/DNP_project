@@ -37,7 +37,7 @@ jobs:
             echo "$output"
           done
 
-  build-and-test:
+  sample_test:
     needs: test
     runs-on: ubuntu-latest
 
@@ -74,6 +74,13 @@ jobs:
         echo "$HOME/hadoop/bin" >> $GITHUB_PATH
         echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
 
+    - name: Prepare HDFS for Sentiment Analysis
+      run: |
+        $HOME/hadoop/bin/hadoop fs -mkdir -p /data/cleaned
+        $HOME/hadoop/bin/hadoop fs -mkdir -p /data/sentiment_output
+        $HOME/hadoop/bin/hadoop fs -chmod -R 755 /data/cleaned
+        $HOME/hadoop/bin/hadoop fs -chmod -R 755 /data/sentiment_output
+
     - name: Prepare WordCount test file
       run: |
         echo "foo bar foo" > sample.txt
@@ -84,13 +91,6 @@ jobs:
       run: |
         sed -i 's/\r$//' src/mapreduce/mapper_wordcount.py
         sed -i 's/\r$//' src/mapreduce/reducer_wordcount.py
-
-    - name: Modifying data folders
-      run: |
-        hdfs dfs -mkdir -p /data/cleaned
-        hdfs dfs -mkdir -p /data/sentiment_output
-        hdfs dfs -chmod -R 755 /data/cleaned
-        hdfs dfs -chmod -R 755 /data/sentiment_output
 
 
     - name: Run Hadoop Streaming WordCount
