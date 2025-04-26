@@ -246,6 +246,11 @@ def main():
                         help='Pass option=value directly to MRJob jobs (e.g., --mr-opt mapreduce.map.memory.mb=4096)')
     parser.add_argument('--cleanup', action='store_true', help='Clean up intermediate HDFS directories on failure or completion')
 
+    
+    # Add wordcount-specific arguments
+    parser.add_argument("--min-word-length", type=int, default=1, help="Minimum word length to include (wordcount only)")
+    parser.add_argument("--stopwords-file", type=str, help="File containing stopwords to exclude (wordcount only)")
+    
     args = parser.parse_args()
 
     # --- Basic Argument Validation ---
