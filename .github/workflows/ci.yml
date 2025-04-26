@@ -79,6 +79,12 @@ jobs:
         $HOME/hadoop/bin/hadoop fs -mkdir -p /tmp/
         $HOME/hadoop/bin/hadoop fs -put sample.txt /tmp/
 
+    - name: Fix line endings in mapper and reducer
+      run: |
+        sed -i 's/\r$//' src/mapreduce/mapper_wordcount.py
+        sed -i 's/\r$//' src/mapreduce/reducer_wordcount.py
+
+
     - name: Run Hadoop Streaming WordCount
       run: |
         $HOME/hadoop/bin/hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
