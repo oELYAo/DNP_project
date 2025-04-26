@@ -1,0 +1,7 @@
+{"id": 2001, "text": "This is a JSON document with an ID field"}
+{"id": 2002, "text": "Another JSON object with positive sentiment, excellent!"}
+{"id": 2003, "text": "Negative sentiment in a JSON object, awful"}
+{"id": 2004, "text": "Just some neutral text in JSON format"}
+{"text": "This JSON object has no ID so one should be generated"}
+{"id": 2006, "content": "This JSON object has content instead of text"}
+{"id": 2007} 
