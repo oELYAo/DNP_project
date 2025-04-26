@@ -69,12 +69,12 @@ jobs:
     - name: Run Hadoop Streaming WordCount
       run: |
         $HOME/hadoop/bin/hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
-          -D mapreduce.job.maps=4 \
-          -D mapreduce.job.reduces=2 \
-          -input /tmp/sample.txt \
-          -output /tmp/sample_out \
-          -mapper src/mapreduce/mapper_wordcount.py \
-          -reducer src/mapreduce/reducer_wordcount.py
+          -files lexicon.csv \
+          -input /data/cleaned/* \
+          -output /data/sentiment_output \
+          -mapper mapper_sentiment.py \
+          -combiner reducer_sentiment.py \
+          -reducer reducer_sentiment.py
 
     - name: Show WordCount output
       run: |
