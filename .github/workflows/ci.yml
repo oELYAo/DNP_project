@@ -83,3 +83,45 @@ jobs:
     - name: Show WordCount output
       run: |
         $HOME/hadoop/bin/hadoop fs -cat /tmp/sample_out/part-*
+
+  sentiment_analysis_job:
+    needs: sample_test
+    runs-on: ubuntu-latest
+
+    steps:
+    name: Test MapReduce Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install mrjob
+        pip install pytest
+
+    - name: Run SentimentAnalysis MRJob
+      run: |
+        mkdir -p output
+        python src/sentiment_analysis_job.py -r local data/sample.txt > output/output.txt
+
+    - name: Verify Output Exists
+      run: |
+        test -s output/output.txt
+
+    
