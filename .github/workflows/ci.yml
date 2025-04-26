@@ -38,6 +38,7 @@ jobs:
           done
 
   build-and-test:
+    needs: lint, test
     runs-on: ubuntu-latest
 
     steps:
