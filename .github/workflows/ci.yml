@@ -65,13 +65,12 @@ jobs:
         sed -i 's/\r$//' src/mapreduce/mapper_wordcount.py
         sed -i 's/\r$//' src/mapreduce/reducer_wordcount.py
 
-    - name: Copy afinn-111.txt to working directory
-      run: cp src/utils/afinn-111.txt .
 
     - name: Run Hadoop Streaming WordCount
       run: |
+        cp data/sample/sample.csv .
         $HOME/hadoop/bin/hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
-          -files afinn-111.txt \
+          -files sample.csv \
           -input /data/cleaned/* \
           -output /data/sentiment_output \
           -mapper mapper_sentiment.py \
