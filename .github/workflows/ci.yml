@@ -76,6 +76,8 @@ jobs:
 
     - name: Prepare HDFS for Sentiment Analysis
       run: |
+        $HADOOP_HOME/bin/hdfs namenode -format
+        $HADOOP_HOME/sbin/start-dfs.sh || true
         $HOME/hadoop/bin/hadoop fs -mkdir -p /data/cleaned
         $HOME/hadoop/bin/hadoop fs -mkdir -p /data/sentiment_output
         $HOME/hadoop/bin/hadoop fs -chmod -R 755 /data/cleaned
