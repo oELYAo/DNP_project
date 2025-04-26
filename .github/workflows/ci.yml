@@ -87,6 +87,8 @@ jobs:
 
     - name: Modifying data folders
       run: |
+        hdfs dfs -mkdir -p /data/cleaned
+        hdfs dfs -mkdir -p /data/sentiment_output
         hdfs dfs -chmod -R 755 /data/cleaned
         hdfs dfs -chmod -R 755 /data/sentiment_output
 
