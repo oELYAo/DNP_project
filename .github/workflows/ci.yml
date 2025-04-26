@@ -45,14 +45,55 @@ jobs:
     # ------------------------------
     - name: Set up Java and Hadoop
       run: |
+        # 1) Install JDK + helper tools
         sudo apt-get update
         sudo apt-get install -y openjdk-11-jdk wget unzip
+
+        # 2) Download & unpack Hadoop
         wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
         tar -xzf hadoop-3.3.6.tar.gz
         mv hadoop-3.3.6 $HOME/hadoop
-        echo "HADOOP_HOME=$HOME/hadoop" >> $GITHUB_ENV
-        echo "$HOME/hadoop/bin" >> $GITHUB_PATH
+
+        # 3) Export paths
+        echo "HADOOP_HOME=$HOME/hadoop"   >> $GITHUB_ENV
+        echo "$HOME/hadoop/bin"           >> $GITHUB_PATH
         echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+
+        # 4) Minimal configuration for pseudo-distributed HDFS
+        cat <<EOF > $HOME/hadoop/etc/hadoop/core-site.xml
+        <configuration>
+          <property>
+            <name>fs.defaultFS</name>
+            <value>hdfs://localhost:9000</value>
+          </property>
+        </configuration>
+        EOF
+
+        cat <<EOF > $HOME/hadoop/etc/hadoop/hdfs-site.xml
+        <configuration>
+          <property>
+            <name>dfs.replication</name>
+            <value>1</value>
+          </property>
+          <property>
+            <name>dfs.namenode.name.dir</name>
+            <value>file://$HOME/hadoop/hdfs/namenode</value>
+          </property>
+          <property>
+            <name>dfs.datanode.data.dir</name>
+            <value>file://$HOME/hadoop/hdfs/datanode</value>
+          </property>
+        </configuration>
+        EOF
+
+        # 5) Format & launch HDFS daemons
+        $HOME/hadoop/bin/hdfs namenode -format -force
+        $HOME/hadoop/sbin/start-dfs.sh
+
+        # 6) Create the HDFS directory & push a tiny sample for testing
+        echo "foo bar foo" > sample.txt
+        hadoop fs -mkdir -p /data/sample
+        hadoop fs -put sample.txt /data/sample
 
     - name: Prepare WordCount test file
       run: |
