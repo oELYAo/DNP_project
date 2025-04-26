@@ -56,9 +56,10 @@ jobs:
 
     - name: Prepare WordCount test file
       run: |
-        echo "foo bar foo" > sample.txt
         $HOME/hadoop/bin/hadoop fs -mkdir -p /data/sample/
         $HOME/hadoop/bin/hadoop fs -put sample.txt /data/sample/
+        echo "foo bar foo" > data/sample/sample.txt
+       
 
     - name: Fix line endings in mapper and reducer
       run: |
@@ -68,13 +69,12 @@ jobs:
 
     - name: Run Hadoop Streaming with sample.csv
       run: |
-        cp data/sample/sample.csv ./sample.csv  # Подготовка локального лексикона
-        cp src/mapreduce/mapper_sentiment.py ./mapper_sentiment.py  # Убедись, что путь правильный
-        cp src/mapreduce/reducer_sentiment.py ./reducer_sentiment.py  # Тоже проверь путь
+        cp src/mapreduce/mapper_sentiment.py ./mapper_sentiment.py
+        cp src/mapreduce/reducer_sentiment.py ./reducer_sentiment.py
         $HOME/hadoop/bin/hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
-          -files sample.csv#afinn-111.txt,mapper_sentiment.py,reducer_sentiment.py \
-          -input /data/cleaned/* \
-          -output /data/sentiment_output \
+          -files data/sample/sample.csv,mapper_sentiment.py,reducer_sentiment.py \
+          -input data/sample/*.txt \
+          -output output/ \
           -mapper "python3 mapper_sentiment.py" \
           -combiner "python3 reducer_sentiment.py" \
           -reducer "python3 reducer_sentiment.py"
