@@ -57,8 +57,8 @@ jobs:
     - name: Prepare WordCount test file
       run: |
         echo "foo bar foo" > sample.txt
-        $HOME/hadoop/bin/hadoop fs -mkdir -p /tmp/
-        $HOME/hadoop/bin/hadoop fs -put sample.txt /tmp/
+        $HOME/hadoop/bin/hadoop fs -mkdir -p /data/sample/
+        $HOME/hadoop/bin/hadoop fs -put sample.txt /data/sample/
 
     - name: Fix line endings in mapper and reducer
       run: |
