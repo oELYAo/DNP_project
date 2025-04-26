@@ -69,7 +69,7 @@ jobs:
     - name: Run Hadoop Streaming WordCount
       run: |
         $HOME/hadoop/bin/hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
-          -files lexicon.csv \
+          -files afinn-111.txt \
           -input /data/cleaned/* \
           -output /data/sentiment_output \
           -mapper mapper_sentiment.py \
