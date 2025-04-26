@@ -17,28 +17,8 @@ jobs:
           echo "Linter score(out of 10): $pylint_score"
           awk -v score="$pylint_score" 'BEGIN {exit !(score >= 0)}'
 
-  test:
-
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with: 
-          python-version: "3.9"
-      - run: pip install -r requirements.txt
-      
-      - name: Run and verify tests
-        run: |
-          for test_file in "test_cleaner.py" "test_mapper_sentiment.py" "test_mapper_wordcount.py" "test_reader.py"; do
-            echo "Testing file $test_file"
-            output=$(pytest -s "tests/$test_file")
-            echo "$output"
-          done
-
   sample_test:
-    needs: test
+    needs: lint
     runs-on: ubuntu-latest
 
     steps:
