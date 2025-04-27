@@ -33,10 +33,10 @@ jobs:
         run: pytest tests/test_structure.py
 
       - name: Test wordcount
-        run: pytest tests/test_wordcount.py
+        run: pytest tests/test_wordcount/*
 
       - name: Test sentiment
-        run: pytest tests/test_sentiment.py
+        run: pytest tests/test_sentiment/*
 
       - name: Test utils
-        run: pytest tests/test_cleaner.py tests/test_reader.py
+        run: pytest tests/test_utils/*
