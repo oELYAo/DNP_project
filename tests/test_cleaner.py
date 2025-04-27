@@ -95,6 +95,18 @@ class TestCleaner(unittest.TestCase):
         self.assertNotIn("a", tokens)
         self.assertNotIn("b", tokens)
         self.assertNotIn("c", tokens)
+    
+    def test_real_world_samples(self):
+        samples = [
+            ("Check out https://example.com! #amazing @user", "check out amazing"),
+            ("RT @someone: Hello!!! #fun", "rt hello fun"),
+            ("", ""),
+            ("    ", ""),
+            ("Special chars: $%^&*()", "special chars"),
+        ]
+        for input_text, expected in samples:
+            with self.subTest(input_text=input_text):
+                self.assertEqual(clean_text(input_text), expected)
 
 
 if __name__ == "__main__":

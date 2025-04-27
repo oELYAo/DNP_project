@@ -96,3 +96,31 @@ logger.error("Error message")
 ```
 
 To enable verbose (DEBUG) output, use the `-v` flag with the CLI tools.
+
+## Supported Input Formats
+
+- **JSON Lines**: Each line is a JSON object with `id` and `text` fields.
+- **CSV**: Must have columns `id` and `text`.
+- **TXT**: Each line is a document; IDs are auto-generated.
+
+See `tests/test_reader.py` for format-specific tests.
+
+## Input Schema
+
+Each document must have:
+- `id`: Unique identifier (string or int)
+- `text`: Raw text content
+
+## Preprocessing Steps
+
+1. **Read**: Load documents from JSON, CSV, or TXT.
+2. **Clean**: Remove URLs, mentions, hashtags, special characters.
+3. **Tokenize**: Split text into words, filter short tokens.
+4. **Normalize**: Lowercase text, remove extra whitespace.
+
+## Troubleshooting
+
+- **FileNotFoundError**: Check input file path.
+- **Malformed file**: Ensure correct format (see above).
+- **Empty output**: Check if input file is empty or all lines are invalid.
+- **Performance**: For large files, use batch processing or increase system memory.

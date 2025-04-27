@@ -18,6 +18,7 @@ from src.utils.data_ingestion import (
     preprocess_document,
     load_and_preprocess
 )
+import pytest
 
 
 class TestDataIngestion(unittest.TestCase):
@@ -136,3 +137,39 @@ class TestDataIngestion(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_empty_file(tmp_path):
+    empty_file = tmp_path / "empty.json"
+    empty_file.write_text("")
+    with pytest.raises(Exception):
+        list(read_records(str(empty_file)))
+
+def test_malformed_json(tmp_path):
+    bad_file = tmp_path / "bad.json"
+    bad_file.write_text("{bad json: true,}")
+    with pytest.raises(Exception):
+        list(read_records(str(bad_file)))
+
+def test_large_file(tmp_path):
+    large_file = tmp_path / "large.json"
+    # Write 10000 simple JSON lines
+    with open(large_file, "w") as f:
+        for i in range(10000):
+            f.write(f'{{"id": "{i}", "text": "sample text"}}\n')
+    docs = list(read_records(str(large_file)))
+    assert len(docs) == 10000
+
+def test_txt_format(tmp_path):
+    txt_file = tmp_path / "sample.txt"
+    txt_file.write_text("First line\nSecond line\n")
+    docs = list(read_records(str(txt_file)))
+    assert len(docs) == 2
+    assert docs[0]["text"] == "First line"
+
+def test_csv_format(tmp_path):
+    csv_file = tmp_path / "sample.csv"
+    csv_file.write_text("id,text\n1,Hello\n2,World\n")
+    docs = list(read_records(str(csv_file)))
+    assert len(docs) == 2
+    assert docs[1]["text"] == "World"

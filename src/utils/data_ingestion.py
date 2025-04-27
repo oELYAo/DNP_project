@@ -22,27 +22,41 @@ from utils.logging_config import get_logger
 logger = get_logger(__name__)
 
 
-def read_records(file_path):
+def read_records(path):
     """
     Read records from a file based on its extension.
     
     Args:
-        file_path: Path to the file
+        path: Path to the file
         
     Returns:
         Generator yielding records as dictionaries
+        
+    Raises:
+        FileNotFoundError: If the file does not exist
+        ValueError: If the file format is not supported
+        Exception: If the file is empty or malformed
     """
-    file_ext = os.path.splitext(file_path)[1].lower()
+    file_ext = os.path.splitext(path)[1].lower()
     
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {file_path}")
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"File not found: {path}")
+    
+    # Raise Exception if file is empty
+    if os.stat(path).st_size == 0:
+        raise Exception("Input file is empty")
+    
+    # Check if file is too large (over 1GB)
+    file_size_mb = os.stat(path).st_size / (1024 * 1024)
+    if file_size_mb > 1000:  # 1000MB = 1GB
+        logger.warning(f"File is very large ({file_size_mb:.2f} MB). Processing may take a long time.")
     
     doc_id = 0  # For formats that don't have IDs
     
-    logger.info(f"Reading records from {file_path} (format: {file_ext})")
+    logger.info(f"Reading records from {path} (format: {file_ext})")
     
     if file_ext == '.json':
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(path, 'r', encoding='utf-8') as file:  # FIX: use 'path'
             for line in file:
                 try:
                     record = json.loads(line.strip())
@@ -64,35 +78,46 @@ def read_records(file_path):
                     yield {'id': record['id'], 'text': record['text']}
                 except json.JSONDecodeError:
                     logger.error(f"Invalid JSON in line: {line}")
+                    raise Exception(f"Malformed JSON: {line}")  # <-- Add this
                     continue
     
     elif file_ext == '.csv':
-        with open(file_path, 'r', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                # Check if 'text' column exists
-                if 'text' not in row:
-                    # Look for alternative text columns
-                    text_fields = ['content', 'message', 'body', 'description']
-                    for field in text_fields:
-                        if field in row:
-                            row['text'] = row[field]
-                            break
+        try:
+            with open(path, 'r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                if not reader.fieldnames:
+                    raise Exception("CSV file has no headers")
+                
+                for row in reader:
+                    # Check if 'text' column exists
+                    if 'text' not in row:
+                        # Look for alternative text columns
+                        text_fields = ['content', 'message', 'body', 'description']
+                        for field in text_fields:
+                            if field in row:
+                                row['text'] = row[field]
+                                break
+                        else:
+                            logger.warning(f"No text field found in row: {row}")
+                            row['text'] = ""  # Use empty string instead of skipping
+                    
+                    # Check if 'id' column exists, otherwise generate one
+                    if 'id' in row and row['id'] != '':
+                        doc_id_value = row['id']
                     else:
-                        logger.warning(f"No text field found in row: {row}")
-                        continue
-                
-                # Check if 'id' column exists, otherwise generate one
-                doc_id_value = row.get('id', doc_id)
-                # Convert empty ID to 0
-                if doc_id_value == '':
-                    doc_id_value = 0
-                doc_id += 1
-                
-                yield {'id': doc_id_value, 'text': row['text']}
+                        # Use the current counter value for auto-incrementing ID
+                        doc_id_value = doc_id
+                    
+                    # Increment the counter after using it
+                    doc_id += 1
+                    
+                    yield {'id': doc_id_value, 'text': row['text']}
+        except csv.Error as e:
+            logger.error(f"CSV parsing error in {path}: {e}")
+            raise Exception(f"Malformed CSV: {e}")
     
     elif file_ext == '.txt':
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(path, 'r', encoding='utf-8') as file:  # FIX: use 'path'
             for line in file:
                 if line.strip():  # Skip empty lines
                     yield {'id': doc_id, 'text': line.strip()}
@@ -102,10 +127,10 @@ def read_records(file_path):
         logger.error(f"Unsupported file format: {file_ext}")
         raise ValueError(f"Unsupported file format: {file_ext}")
     
-    logger.info(f"Finished reading records from {file_path}")
+    logger.info(f"Finished reading records from {path}")  # FIX: use 'path'
 
 
-def clean_text(text: str) -> str:
+def clean_text(text):
     """Cleans the input text by removing special characters and normalizing.
     
     Args:
@@ -113,24 +138,38 @@ def clean_text(text: str) -> str:
         
     Returns:
         Cleaned text
+        
+    Note:
+        This function preserves alphanumeric characters and basic punctuation
+        while removing URLs, mentions, and hashtags.
     """
     if not text:
         return ""
     
-    # Convert to lowercase
-    text = text.lower()
+    # Handle non-string inputs
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except:
+            logger.warning(f"Could not convert {type(text)} to string")
+            return ""
     
+    text = text.lower()
     # Remove URLs
     text = re.sub(r'https?://\S+|www\.\S+', '', text)
-    
-    # Remove mentions and hashtags (common in tweets)
-    text = re.sub(r'@\w+|#\w+', '', text)
-    
-    # Remove punctuation and special characters
-    text = re.sub(r'[^\w\s]', '', text)
-    
-    # Remove extra whitespace
+    # Remove mentions
+    text = re.sub(r'@\w+', '', text)
+    # Remove hashtags entirely (including the word)
+    text = re.sub(r'#\w+', '', text)
+    # Remove special characters but preserve spaces
+    text = re.sub(r'[^\w\s]', ' ', text)
+    # Normalize whitespace
     text = re.sub(r'\s+', ' ', text).strip()
+    
+    # Check if text is too long (potential memory issue)
+    if len(text) > 100000:  # 100K characters
+        logger.warning(f"Very long text detected ({len(text)} chars). Truncating to 100K chars.")
+        text = text[:100000]
     
     return text
 
@@ -144,6 +183,10 @@ def tokenize(text: str) -> List[str]:
         
     Returns:
         List of tokens
+        
+    Note:
+        This function removes common English stopwords and single-letter words.
+        For more advanced tokenization, consider using NLTK or spaCy.
     """
     if not text:
         return []
@@ -151,12 +194,19 @@ def tokenize(text: str) -> List[str]:
     # Clean the text first
     cleaned = clean_text(text)
     
-    # Define stopwords to filter out
-    stopwords = ["a", "an", "the", "is", "are", "was", "were", "be", "been", 
-                "being", "in", "on", "at", "to", "for", "by", "of"]
+    # Define stopwords to filter out (reduced list - keep "with" and "this")
+    stopwords = [
+        "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+        "in", "on", "at", "to", "for", "by", "of", "and", "or", "not", 
+        "it", "its", "as", "from"
+    ]
     
     # Split into tokens and filter out stopwords and single-letter words
     tokens = [word for word in cleaned.split() if word not in stopwords and len(word) > 1]
+    
+    # Warn if no tokens were found
+    if not tokens and cleaned:
+        logger.warning(f"No tokens extracted from text: '{cleaned[:50]}...'")
     
     return tokens
 

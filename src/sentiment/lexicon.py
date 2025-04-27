@@ -1,4 +1,4 @@
-def load_lexicon(path: str) -> dict[str, int]:
+def load_lexicon(path):
     """
     Returns word → sentiment score map. Unknown words default to 0.
     
@@ -8,13 +8,15 @@ def load_lexicon(path: str) -> dict[str, int]:
     Returns:
         dict[str, int]: Mapping of words to their sentiment scores
     """
-    lex = {}
-    with open(path) as f:
+    lexicon = {}
+    with open(path, encoding="utf-8") as f:
         for line in f:
-            try:
-                word, score, _ = line.strip().split(',')
-                lex[word] = int(score)
-            except ValueError:
-                # Skip header or malformed lines
+            line = line.strip()
+            if not line:
                 continue
-    return lex
+            parts = line.split('\t')
+            if len(parts) != 2:
+                raise ValueError(f"Malformed lexicon line: {line}")
+            word, score = parts
+            lexicon[word.lower()] = int(score)
+    return lexicon

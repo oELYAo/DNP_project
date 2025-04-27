@@ -8,7 +8,7 @@ def test_load_lexicon(tmp_path):
     
     # Test loading
     lex = load_lexicon(str(p))
-    assert lex["good"] == 2
+    assert lex["good"] == 2  # If loader lowercases, this is fine
     assert lex["bad"] == -2
 
 def test_malformed_lexicon(tmp_path):
