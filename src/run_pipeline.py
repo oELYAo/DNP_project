@@ -23,6 +23,7 @@ python src/run_pipeline.py --input data/processed/processed_docs.jsonl --job wor
 
 import argparse
 import logging
+import logging
 import os
 import subprocess
 import sys
@@ -223,8 +224,16 @@ def main():
         epilog=__doc__ # Use the module docstring as epilog
     )
     parser.add_argument("--input", required=True, help="Input file path or pattern (e.g., data/input.txt, hdfs:///user/data/input*)")
+    setup_logging() # Setup root logger configuration
+    parser = argparse.ArgumentParser(
+        description="Distributed Text Mining Pipeline Runner",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__ # Use the module docstring as epilog
+    )
+    parser.add_argument("--input", required=True, help="Input file path or pattern (e.g., data/input.txt, hdfs:///user/data/input*)")
     parser.add_argument(
         "--job",
+        choices=["wordcount", "sentiment", "all"],
         choices=["wordcount", "sentiment", "all"],
         required=True,
         help="Job type to run ('all' runs wordcount then sentiment)",
