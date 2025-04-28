@@ -7,26 +7,33 @@ class SentimentReducer(MRJob):
     def configure_args(self):
         super(SentimentReducer, self).configure_args()
         self.add_file_arg('--config', help='Path to sentiment config YAML')
-        
+        self.add_passthru_arg('--threshold-positive', type=float, 
+                             help='Positive sentiment threshold')
+        self.add_passthru_arg('--threshold-negative', type=float,
+                             help='Negative sentiment threshold')
+        self.add_passthru_arg('--global-summary', action='store_true',
+                             help='Generate global sentiment summary')
+    
     def reducer_init(self):
         with open(self.options.config) as f:
             config = yaml.safe_load(f)
-            self.TH_POS = config['threshold_positive']
-            self.TH_NEG = config['threshold_negative']
+            # Allow CLI override of thresholds
+            self.TH_POS = float(self.options.threshold_positive or config['threshold_positive'])
+            self.TH_NEG = float(self.options.threshold_negative or config['threshold_negative'])
             
     def reducer(self, doc_id, values):
         """
         Input: doc_id \t score \t pos_count \t neg_count
-        Output: CSV with doc_id,total_score,total_pos,total_neg,label
+        Output: doc_id, total_score, total_pos, total_neg, label
         """
         total_score = 0
         total_pos = 0
         total_neg = 0
         
         for score, pos, neg in values:
-            total_score += score
-            total_pos += pos
-            total_neg += neg
+            total_score += float(score)
+            total_pos += int(pos)
+            total_neg += int(neg)
             
         # Determine sentiment label
         if total_score > self.TH_POS:
@@ -36,9 +43,12 @@ class SentimentReducer(MRJob):
         else:
             label = "neutral"
             
-        # Output as CSV
-        writer = csv.writer(sys.stdout)
-        writer.writerow([doc_id, total_score, total_pos, total_neg, label])
+        # Output format matching test expectations
+        result = (doc_id, total_score, total_pos, total_neg, label)
+        if self.options.global_summary:
+            yield 'ALL', result
+        else:
+            yield doc_id, result
 
 if __name__ == '__main__':
     SentimentReducer.run()
