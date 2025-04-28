@@ -22,6 +22,7 @@ python src/run_pipeline.py --input data/processed/processed_docs.jsonl --job wor
 """
 
 import argparse
+import logging
 <<<<<<< HEAD
 import logging
 <<<<<<< HEAD
@@ -226,7 +227,6 @@ from typing import List, Optional
 
 from utils.logging_config import setup_logging, get_logger
 
-# Set up logger
 logger = get_logger(__name__)
 
 
