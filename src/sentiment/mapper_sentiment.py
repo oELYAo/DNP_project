@@ -1,6 +1,6 @@
 import sys
 from mrjob.job import MRJob
-from lexicon import load_lexicon
+from .lexicon import load_lexicon
 
 class SentimentMapper(MRJob):
     def configure_args(self):
