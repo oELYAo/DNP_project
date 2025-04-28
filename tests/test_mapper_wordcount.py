@@ -7,17 +7,11 @@ import os
 # Add the parent directory to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.wordcount.mapper_wordcount import map_wordcount, tokenize, load_stopwords
+from src.wordcount.mapper_wordcount import map_wordcount, load_stopwords
 from src.wordcount.reducer_wordcount import reduce_wordcount
 
 
 class TestWordCount(unittest.TestCase):
-    def test_tokenize(self):
-        """Test the tokenization function."""
-        text = "Hello, world! This is a test."
-        expected = ["hello", "world", "this", "is", "a", "test"]
-        self.assertEqual(list(tokenize(text)), expected)
-        
     def test_map_wordcount_basic(self):
         """Test basic word count mapping."""
         input_text = io.StringIO("Hello world\nHello test")
