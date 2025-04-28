@@ -7,14 +7,35 @@ def load_lexicon(path: str) -> dict[str, int]:
         
     Returns:
         dict[str, int]: Mapping of words to their sentiment scores
+        
+    Raises:
+        FileNotFoundError: If lexicon file doesn't exist
+        ValueError: If lexicon file format is invalid
     """
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Lexicon file not found: {path}")
+        
     lex = {}
     with open(path) as f:
-        for line in f:
-            try:
-                word, score, _ = line.strip().split(',')
-                lex[word] = int(score)
-            except ValueError:
-                # Skip header or malformed lines
+        for line_num, line in enumerate(f, 1):
+            line = line.strip()
+            if not line or line.startswith('#'):
                 continue
+                
+            try:
+                parts = line.split(',')
+                if len(parts) < 2:
+                    continue  # Skip lines without enough parts
+                    
+                word = parts[0].strip().lower()
+                score = int(parts[1])
+                if word:  # Skip empty words
+                    lex[word] = score
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Skipping malformed line {line_num} in lexicon: {line}")
+                continue
+                
+    if not lex:
+        logger.warning(f"No valid entries found in lexicon file: {path}")
+        
     return lex
