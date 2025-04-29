@@ -8,6 +8,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+
 def load_lexicon(path: str) -> dict[str, int]:
     """
     Returns word → sentiment score map. Unknown words default to 0.
