@@ -26,3 +26,27 @@ def test_empty_lexicon(tmp_path):
     
     lex = load_lexicon(str(p))
     assert len(lex) == 0
+
+def test_missing_word_returns_zero(tmp_path):
+    """Test that unknown words return 0"""
+    p = tmp_path/"lex.txt"
+    p.write_text("good\t2\nbad\t-2\n")
+    
+    lex = load_lexicon(str(p))
+    assert lex.get("unknown_word", 0) == 0
+
+def test_memory_usage(tmp_path):
+    """Test memory usage with large lexicon"""
+    p = tmp_path/"large_lex.txt"
+    # Create large lexicon (100k entries)
+    with open(p, 'w') as f:
+        for i in range(100000):
+            f.write(f"word{i}\t{i%5-2}\n")
+    
+    import resource
+    before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    lex = load_lexicon(str(p))
+    after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    
+    # Check memory usage (should be under 128MB)
+    assert (after - before) / 1024 < 128  # Convert KB to MB

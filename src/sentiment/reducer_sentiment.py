@@ -19,7 +19,10 @@ class SentimentReducer(MRJob):
                              help='Negative sentiment threshold')
         self.add_passthru_arg('--global-summary', action='store_true',
                              help='Generate global sentiment summary')
-    
+        self.add_passthru_arg('--output-csv', 
+                             help='Path to output CSV file',
+                             default='data/sentiment_output/final.csv')
+
     def reducer_init(self):
         with open(self.options.config) as f:
             config = yaml.safe_load(f)
@@ -27,6 +30,12 @@ class SentimentReducer(MRJob):
             self.TH_POS = float(self.options.threshold_positive or config['threshold_positive'])
             self.TH_NEG = float(self.options.threshold_negative or config['threshold_negative'])
             
+        # Ensure output directory exists
+        os.makedirs(os.path.dirname(self.options.output_csv), exist_ok=True)
+        self.csv_file = open(self.options.output_csv, 'w')
+        self.csv_writer = csv.writer(self.csv_file)
+        self.csv_writer.writerow(['doc_id', 'total_score', 'total_pos', 'total_neg', 'label'])
+
     def reducer(self, doc_id, values):
         """
         Input: doc_id \t score \t pos_count \t neg_count
@@ -55,6 +64,10 @@ class SentimentReducer(MRJob):
             yield 'ALL', result
         else:
             yield doc_id, result
+
+    def reducer_final(self):
+        if hasattr(self, 'csv_file'):
+            self.csv_file.close()
 
 if __name__ == '__main__':
     SentimentReducer.run()
