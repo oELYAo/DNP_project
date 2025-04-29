@@ -72,9 +72,6 @@ jobs:
       - name: Installing requiered packages
         run: pip install -r requirements.txt
 
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/src" >> $GITHUB_ENV
-
       
       - name: Test wordcount
         run: pytest tests/test_wordcount/*
