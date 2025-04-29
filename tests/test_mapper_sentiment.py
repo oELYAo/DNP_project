@@ -1,6 +1,7 @@
 import json
 import pytest
-from src.mapreduce.mapper_sentiment import load_lexicon, mapper
+import src.sentiment.mapper_sentiment 
+from src.sentiment.lexicon import load_lexicon
 
 @pytest.fixture
 def lexicon():

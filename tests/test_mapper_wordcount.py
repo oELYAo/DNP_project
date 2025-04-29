@@ -1,5 +1,5 @@
 import pytest
-from src.mapreduce.mapper_wordcount import mapper
+from src.wordcount.mapper_wordcount import map_wordcount
 
 def test_mapper_single_line():
     line = "foo bar foo"
