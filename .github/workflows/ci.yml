@@ -160,7 +160,7 @@ jobs:
       - name: Run SentimentAnalysis MRJob
         run: |
           mkdir -p output
-          python src/sentiment_analysis_job.py -r local data/sample.txt > output/output.txt
+          python src/sentiment_analysis_job.py -r local data/sample/sample.txt > output/output.txt
 
       - name: Verify Output Exists
         run: |
