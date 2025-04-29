@@ -18,7 +18,7 @@ from utils.lexicon_loader import load_lexicon
 def main():
     """Process each line from stdin and emit document sentiment scores."""
     # Load the sentiment lexicon
-    lexicon_path = "afinn-111.txt"  # This will be distributed via -files
+    lexicon_path = "lexicon.csv"  # This will be distributed via -files
     lexicon = load_lexicon(lexicon_path)
     
     for line in sys.stdin:
