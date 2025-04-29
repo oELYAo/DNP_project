@@ -1,0 +1,155 @@
+name: CI
+on: [push]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Install pylint
+        run: pip install pylint
+      - name: Code linting...
+        run: |
+          pylint_score=$(pylint --exit-zero src/ tests/ | grep -oP 'at \K\d+\.\d+')
+          echo "Linter score(out of 10): $pylint_score"
+          awk -v score="$pylint_score" 'BEGIN {exit !(score >= 0)}'
+
+  sample_test:
+    needs: lint
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run unit tests
+      run: |
+        pip install pytest
+        pytest
+
+    # ------------------------------
+    # Hadoop Streaming WordCount
+    # ------------------------------
+    - name: Set up Java and Hadoop
+      run: |
+        # 1) Install JDK + helper tools
+        sudo apt-get update
+        sudo apt-get install -y openjdk-11-jdk wget unzip
+
+        # 2) Download & unpack Hadoop
+        wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+        tar -xzf hadoop-3.3.6.tar.gz
+        mv hadoop-3.3.6 $HOME/hadoop
+
+        # 3) Export paths
+        echo "HADOOP_HOME=$HOME/hadoop"   >> $GITHUB_ENV
+        echo "$HOME/hadoop/bin"           >> $GITHUB_PATH
+        echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+
+        # 4) Minimal configuration for pseudo-distributed HDFS
+        cat <<EOF > $HOME/hadoop/etc/hadoop/core-site.xml
+        <configuration>
+          <property>
+            <name>fs.defaultFS</name>
+            <value>hdfs://localhost:9000</value>
+          </property>
+        </configuration>
+        EOF
+
+        cat <<EOF > $HOME/hadoop/etc/hadoop/hdfs-site.xml
+        <configuration>
+          <property>
+            <name>dfs.replication</name>
+            <value>1</value>
+          </property>
+          <property>
+            <name>dfs.namenode.name.dir</name>
+            <value>file://$HOME/hadoop/hdfs/namenode</value>
+          </property>
+          <property>
+            <name>dfs.datanode.data.dir</name>
+            <value>file://$HOME/hadoop/hdfs/datanode</value>
+          </property>
+        </configuration>
+        EOF
+
+        # 5) Format & launch HDFS daemons
+        $HOME/hadoop/bin/hdfs namenode -format -force
+        $HOME/hadoop/sbin/start-dfs.sh
+
+        # 6) Create the HDFS directory & push a tiny sample for testing
+        echo "foo bar foo" > sample.txt
+        hadoop fs -mkdir -p /data/sample
+        hadoop fs -put sample.txt /data/sample
+
+    - name: Prepare WordCount test file
+      run: |
+        $HOME/hadoop/bin/hadoop fs -mkdir -p /data/sample/
+        $HOME/hadoop/bin/hadoop fs -put sample.txt /data/sample/
+        echo "foo bar foo" > data/sample/sample.txt
+       
+
+    - name: Fix line endings in mapper and reducer
+      run: |
+        sed -i 's/\r$//' src/mapreduce/mapper_wordcount.py
+        sed -i 's/\r$//' src/mapreduce/reducer_wordcount.py
+
+
+    - name: Run Hadoop Streaming with sample.csv
+      run: |
+        cp src/mapreduce/mapper_sentiment.py ./mapper_sentiment.py
+        cp src/mapreduce/reducer_sentiment.py ./reducer_sentiment.py
+        $HOME/hadoop/bin/hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
+          -files data/sample/sample.csv,mapper_sentiment.py,reducer_sentiment.py \
+          -input data/sample/*.txt \
+          -output output/ \
+          -mapper "python3 mapper_sentiment.py" \
+          -combiner "python3 reducer_sentiment.py" \
+          -reducer "python3 reducer_sentiment.py"
+
+
+    - name: Show WordCount output
+      run: |
+        $HOME/hadoop/bin/hadoop fs -cat /tmp/sample_out/part-*
+
+  sentiment_analysis_job:
+    needs: sample_test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install mrjob
+        pip install pytest
+
+    - name: Run SentimentAnalysis MRJob
+      run: |
+        mkdir -p output
+        python src/sentiment_analysis_job.py -r local data/sample.txt > output/output.txt
+
+    - name: Verify Output Exists
+      run: |
+        test -s output/output.txt
+
+    
