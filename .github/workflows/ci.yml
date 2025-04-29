@@ -86,7 +86,7 @@ jobs:
         run: pytest tests/test_utils/*
 
   sample_test:
-    needs: Unit_tests
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
