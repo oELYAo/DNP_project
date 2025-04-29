@@ -1,0 +1,11 @@
+word,sentiment
+happy,positive
+joy,positive
+great,positive
+excellent,positive
+sad,negative
+bad,negative
+terrible,negative
+hate,negative
+okay,neutral
+average,neutral
