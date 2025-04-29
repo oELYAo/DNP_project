@@ -165,3 +165,4 @@ jobs:
       - name: Verify Output Exists
         run: |
           test -s output/output.txt
+          cat output/output.txt
