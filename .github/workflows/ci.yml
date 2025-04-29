@@ -1,5 +1,6 @@
 name: CI
 on: [push]
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -34,32 +35,27 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-
-    - name: Run unit tests
-      run: |
         pip install pytest
-        pytest
+
+    - name: Run Pytest
+      run: |
+        pytest tests/
 
     # ------------------------------
     # Hadoop Streaming WordCount
     # ------------------------------
     - name: Set up Java and Hadoop
       run: |
-        # 1) Install JDK + helper tools
         sudo apt-get update
         sudo apt-get install -y openjdk-11-jdk wget unzip
-
-        # 2) Download & unpack Hadoop
         wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
         tar -xzf hadoop-3.3.6.tar.gz
         mv hadoop-3.3.6 $HOME/hadoop
-
-        # 3) Export paths
-        echo "HADOOP_HOME=$HOME/hadoop"   >> $GITHUB_ENV
-        echo "$HOME/hadoop/bin"           >> $GITHUB_PATH
+        echo "HADOOP_HOME=$HOME/hadoop" >> $GITHUB_ENV
+        echo "$HOME/hadoop/bin" >> $GITHUB_PATH
         echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
 
-        # 4) Minimal configuration for pseudo-distributed HDFS
+        # Configure pseudo-distributed HDFS
         cat <<EOF > $HOME/hadoop/etc/hadoop/core-site.xml
         <configuration>
           <property>
@@ -86,11 +82,9 @@ jobs:
         </configuration>
         EOF
 
-        # 5) Format & launch HDFS daemons
         $HOME/hadoop/bin/hdfs namenode -format -force
         $HOME/hadoop/sbin/start-dfs.sh
 
-        # 6) Create the HDFS directory & push a tiny sample for testing
         echo "foo bar foo" > sample.txt
         hadoop fs -mkdir -p /data/sample
         hadoop fs -put sample.txt /data/sample
@@ -100,13 +94,11 @@ jobs:
         $HOME/hadoop/bin/hadoop fs -mkdir -p /data/sample/
         $HOME/hadoop/bin/hadoop fs -put sample.txt /data/sample/
         echo "foo bar foo" > data/sample/sample.txt
-       
 
     - name: Fix line endings in mapper and reducer
       run: |
         sed -i 's/\r$//' src/mapreduce/mapper_wordcount.py
         sed -i 's/\r$//' src/mapreduce/reducer_wordcount.py
-
 
     - name: Run Hadoop Streaming with sample.csv
       run: |
@@ -119,7 +111,6 @@ jobs:
           -mapper "python3 mapper_sentiment.py" \
           -combiner "python3 reducer_sentiment.py" \
           -reducer "python3 reducer_sentiment.py"
-
 
     - name: Show WordCount output
       run: |
@@ -151,5 +142,3 @@ jobs:
     - name: Verify Output Exists
       run: |
         test -s output/output.txt
-
-    
