@@ -71,6 +71,10 @@ jobs:
           python-version: "3.9"
       - name: Installing requiered packages
         run: pip install -r requirements.txt
+
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/src" >> $GITHUB_ENV
+
       
       - name: Test wordcount
         run: pytest tests/test_wordcount/*
@@ -82,7 +86,7 @@ jobs:
         run: pytest tests/test_utils/*
 
   sample_test:
-    needs: lint
+    needs: Unit_tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -97,6 +101,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Run tests
+        run: PYTHONPATH=./src pytest
+
 
       - name: Run unit tests
         run: |
