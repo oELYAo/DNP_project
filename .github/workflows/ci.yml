@@ -86,59 +86,59 @@ jobs:
         run: pytest tests/test_utils/*
 
   sample_test:
-  needs: lint
-  runs-on: ubuntu-latest
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Set up Java and Hadoop (standalone mode)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y openjdk-11-jdk wget
+      - name: Set up Java and Hadoop (standalone mode)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-11-jdk wget
 
-        wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
-        tar -xzf hadoop-3.3.6.tar.gz
-        mv hadoop-3.3.6 $HOME/hadoop
+          wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+          tar -xzf hadoop-3.3.6.tar.gz
+          mv hadoop-3.3.6 $HOME/hadoop
 
-        echo "HADOOP_HOME=$HOME/hadoop" >> $GITHUB_ENV
-        echo "$HOME/hadoop/bin" >> $GITHUB_PATH
-        echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+          echo "HADOOP_HOME=$HOME/hadoop" >> $GITHUB_ENV
+          echo "$HOME/hadoop/bin" >> $GITHUB_PATH
+          echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
 
-    - name: Prepare sample data
-      run: |
-        echo "foo bar foo" > sample.txt
+      - name: Prepare sample data
+        run: |
+          echo "foo bar foo" > sample.txt
 
-    - name: Fix line endings in mapper and reducer
-      run: |
-        sed -i 's/\r$//' src/wordcount/mapper_wordcount.py
-        sed -i 's/\r$//' src/wordcount/reducer_wordcount.py
+      - name: Fix line endings in mapper and reducer
+        run: |
+          sed -i 's/\r$//' src/wordcount/mapper_wordcount.py
+          sed -i 's/\r$//' src/wordcount/reducer_wordcount.py
 
-    - name: Run Hadoop Streaming with WordCount (standalone)
-      run: |
-        cp src/wordcount/mapper_wordcount.py ./mapper_wordcount.py
-        cp src/wordcount/reducer_wordcount.py ./reducer_wordcount.py
+      - name: Run Hadoop Streaming with WordCount (standalone)
+        run: |
+          cp src/wordcount/mapper_wordcount.py ./mapper_wordcount.py
+          cp src/wordcount/reducer_wordcount.py ./reducer_wordcount.py
 
-        hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
-          -files mapper_wordcount.py,reducer_wordcount.py \
-          -input sample.txt \
-          -output output_dir \
-          -mapper "python3 mapper_wordcount.py" \
-          -reducer "python3 reducer_wordcount.py"
+          hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
+            -files mapper_wordcount.py,reducer_wordcount.py \
+            -input sample.txt \
+            -output output_dir \
+            -mapper "python3 mapper_wordcount.py" \
+            -reducer "python3 reducer_wordcount.py"
 
-    - name: Show WordCount output
-      run: |
-        cat output_dir/part-*
+      - name: Show WordCount output
+        run: |
+          cat output_dir/part-*
   
   sentiment_analysis_job:
     needs: sample_test
