@@ -1,47 +1,58 @@
 #!/usr/bin/env python3
 """
-Mapper for Sentiment Analysis.
-Reads text lines, assigns doc IDs, and emits (doc_id, sentiment_score)
+Mapper for Sentiment Analysis job.
+Reads text input and emits (doc_id, score, pos_count, neg_count)
 """
 
 import sys
+import csv
+import yaml
 from mrjob.job import MRJob
-from lexicon import load_lexicon
+from mrjob.step import MRStep
 
 class SentimentMapper(MRJob):
     def configure_args(self):
         super(SentimentMapper, self).configure_args()
-        self.add_file_arg('--lexicon', help='Path to sentiment lexicon file')
-        
+        self.add_file_arg('--config', help='Path to sentiment config YAML')
+        self.add_file_arg('--lexicon', help='Path to lexicon file')
+
     def mapper_init(self):
-        self.lex = load_lexicon(self.options.lexicon)
-    
+        # Load lexicon
+        with open(self.options.lexicon) as f:
+            self.lexicon = {}
+            for line in f:
+                if line.strip() and not line.startswith('#'):
+                    word, score, _ = line.strip().split(',')
+                    self.lexicon[word.lower()] = int(score)
+
     def mapper(self, _, line):
         """
-        Input format: doc_id \t token1 token2 token3...
-        Output format: doc_id \t score \t pos_count \t neg_count
+        Input: doc_id \t text
+        Output: (doc_id, (score, pos_count, neg_count))
         """
-        doc_id, text = line.strip().split('\t')
-        tokens = text.split()
-        
-        score = sum(self.lex.get(t, 0) for t in tokens)
-        pos_count = sum(1 for t in tokens if self.lex.get(t, 0) > 0)
-        neg_count = sum(1 for t in tokens if self.lex.get(t, 0) < 0)
-        
-        yield doc_id, (score, pos_count, neg_count)
-    
-    def combiner(self, doc_id, values):
-        """Sum partial scores and counts for each document"""
-        total_score = 0
-        total_pos = 0
-        total_neg = 0
-        
-        for score, pos, neg in values:
-            total_score += score
-            total_pos += pos
-            total_neg += neg
+        try:
+            doc_id, text = line.strip().split('\t', 1)
+            # Remove comments
+            text = text.split('#')[0].strip()
             
-        yield doc_id, (total_score, total_pos, total_neg)
+            words = text.lower().split()
+            total_score = 0
+            pos_count = 0
+            neg_count = 0
+            
+            for word in words:
+                score = self.lexicon.get(word, 0)
+                total_score += score
+                if score > 0:
+                    pos_count += 1
+                elif score < 0:
+                    neg_count += 1
+                    
+            yield doc_id, (total_score, pos_count, neg_count)
+            
+        except ValueError:
+            # Skip malformed lines
+            print(f"Skipping malformed line: {line}", file=sys.stderr)
 
 if __name__ == '__main__':
     SentimentMapper.run()

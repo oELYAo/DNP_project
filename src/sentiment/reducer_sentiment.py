@@ -5,6 +5,7 @@ Reads (doc_id, score) pairs and emits (doc_id, sentiment_label)
 """
 
 import sys
+import os
 import csv
 import yaml
 from mrjob.job import MRJob
@@ -45,18 +46,29 @@ class SentimentReducer(MRJob):
         total_pos = 0
         total_neg = 0
         
-        for score, pos, neg in values:
-            total_score += float(score)
-            total_pos += int(pos)
-            total_neg += int(neg)
-            
-        # Determine sentiment label
-        if total_score > self.TH_POS:
-            label = "positive"
-        elif total_score < self.TH_NEG:
-            label = "negative"
-        else:
-            label = "neutral"
+        try:
+            for value in values:
+                # Parse the input values safely
+                if isinstance(value, (list, tuple)) and len(value) == 3:
+                    score, pos, neg = value
+                    total_score += float(score)
+                    total_pos += int(pos)
+                    total_neg += int(neg)
+                else:
+                    raise ValueError(f"Invalid input format: {value}")
+                    
+            # Determine sentiment label
+            if total_score > self.TH_POS:
+                label = "positive"
+            elif total_score < self.TH_NEG:
+                label = "negative"
+            else:
+                label = "neutral"
+                
+        except (ValueError, TypeError) as e:
+            # Handle parsing errors
+            print(f"Error processing values for doc_id {doc_id}: {e}", file=sys.stderr)
+            return
             
         # Output format matching test expectations
         result = (doc_id, total_score, total_pos, total_neg, label)

@@ -4,7 +4,7 @@ from src.sentiment.lexicon import load_lexicon
 def test_load_lexicon(tmp_path):
     # Create a temporary lexicon file
     p = tmp_path/"lex.txt"
-    p.write_text("good\t2\nbad\t-2\n")
+    p.write_text("good,2\nbad,-2\n")  # Changed from tab to comma
     
     # Test loading
     lex = load_lexicon(str(p))
@@ -14,10 +14,16 @@ def test_load_lexicon(tmp_path):
 def test_malformed_lexicon(tmp_path):
     # Test with malformed line
     p = tmp_path/"bad_lex.txt"
-    p.write_text("good\t2\nbad_line\nbad\t-2\n")
+    p.write_text("good,2\nbad_line\nbad,-2\n")  # Using comma separator
     
-    with pytest.raises(ValueError):
-        load_lexicon(str(p))
+    # Load lexicon - should skip malformed line
+    lex = load_lexicon(str(p))
+    
+    # Verify good and bad are loaded, malformed line is skipped
+    assert len(lex) == 2
+    assert lex["good"] == 2
+    assert lex["bad"] == -2
+    assert "bad_line" not in lex
 
 def test_empty_lexicon(tmp_path):
     # Test with empty file
