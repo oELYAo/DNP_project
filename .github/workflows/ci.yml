@@ -2,7 +2,47 @@ name: CI
 on: [push]
 
 jobs:
+  files_existing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check required files exist
+        id: check_files
+        run: |
+          echo "Checking required files..."
+          MISSING_FILES=()
+          REQUIRED_FILES=(
+            src/sentiment/mapper_sentiment.py
+            src/sentiment/reducer_sentiment.py
+            src/sentiment/lexicon.py
+            src/wordcount/mapper_wordcount.py
+            src/wordcount/reducer_wordcount.py
+            src/run_pipeline.py
+            src/preprocess.py
+            src/utils/data_cli.py
+            src/utils/data_ingestion.py
+            src/utils/data_preprocessor.py
+            src/utils/logging_config.py
+          )
+
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              MISSING_FILES+=("$file")
+            fi
+          done
+
+          if [ ${#MISSING_FILES[@]} -ne 0 ]; then
+            echo "❌ Missing files:"
+            for f in "${MISSING_FILES[@]}"; do
+              echo "- $f"
+            done
+            exit 1
+          else
+            echo "✅ All required files are present."
+          fi
   lint:
+    needs: files_existing
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
