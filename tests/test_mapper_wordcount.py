@@ -7,7 +7,7 @@ import os
 # Add the parent directory to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.wordcount.mapper_wordcount import map_wordcount, tokenize, load_stopwords
+from src.wordcount.mapper_wordcount import map_wordcount, load_stopwords
 from src.wordcount.reducer_wordcount import reduce_wordcount
 
 
