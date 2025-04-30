@@ -96,3 +96,10 @@ logger.error("Error message")
 ```
 
 To enable verbose (DEBUG) output, use the `-v` flag with the CLI tools.
+
+## Sentiment Analysis Job
+
+To run the sentiment MapReduce job:
+
+```bash
+python run_pipeline.py

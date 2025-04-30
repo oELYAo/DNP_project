@@ -1,6 +1,12 @@
+#!/usr/bin/env python3
+"""
+Mapper for Sentiment Analysis.
+Reads text lines, assigns doc IDs, and emits (doc_id, sentiment_score)
+"""
+
 import sys
 from mrjob.job import MRJob
-from .lexicon import load_lexicon
+from src.sentiment.lexicon import load_lexicon
 
 class SentimentMapper(MRJob):
     def configure_args(self):
