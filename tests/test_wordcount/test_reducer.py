@@ -1,4 +1,4 @@
-from src.wordcount.mapper import mapper
+from src.wordcount.mapper_wordcount import mapper
 
 class TestReducerWordcout:
     def test_empty(self):
