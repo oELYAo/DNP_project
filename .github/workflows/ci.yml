@@ -73,8 +73,11 @@ jobs:
         run: pip install -r requirements.txt
 
       
-      - name: Test wordcount
-        run: pytest tests/test_wordcount/*
+      - name: Run unit tests - Wordcount
+        run: |
+          export PYTHONPATH=.
+          pytest tests/test_wordcount/*
+
 
       - name: Test sentiment
         run: pytest tests/test_sentiment/*
