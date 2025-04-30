@@ -1,0 +1,166 @@
+name: CI
+on: [push]
+
+jobs:
+  file_existing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check required files exist
+        id: check_files
+        run: |
+          echo "Checking required files..."
+          MISSING_FILES=()
+          REQUIRED_FILES=(
+            src/sentiment/mapper_sentiment.py
+            src/sentiment/reducer_sentiment.py
+            src/sentiment/lexicon.py
+            src/wordcount/mapper_wordcount.py
+            src/wordcount/reducer_wordcount.py
+            src/run_pipeline.py
+            src/preprocess.py
+            src/utils/data_cli.py
+            src/utils/data_ingestion.py
+            src/utils/data_preprocessor.py
+            src/utils/logging_config.py
+          )
+
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              MISSING_FILES+=("$file")
+            fi
+          done
+
+          if [ ${#MISSING_FILES[@]} -ne 0 ]; then
+            echo "❌ Missing files:"
+            for f in "${MISSING_FILES[@]}"; do
+              echo "- $f"
+            done
+            exit 1
+          else
+            echo "✅ All required files are present."
+          fi
+          
+  linting:
+    needs: file_existing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Install pylint
+        run: pip install pylint
+      - name: Linter result
+        run: |
+          pylint_score=$(pylint --exit-zero src/ tests/ | grep -oP 'at \K\d+\.\d+')
+          echo "Linter score(out of 10): $pylint_score"
+          awk -v score="$pylint_score" 'BEGIN {exit !(score >= 0)}'
+
+  unit_tests:
+    needs: linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with: 
+          python-version: "3.9"
+      - name: Installing requiered packages
+        run: pip install -r requirements.txt
+
+      
+      - name: Test wordcount
+        run: pytest tests/test_wordcount/*
+
+      - name: Test sentiment
+        run: pytest tests/test_sentiment/*
+
+      - name: Test utils
+        run: pytest tests/test_utils/*
+
+  sample_test:
+    needs: unit_tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Set up Java and Hadoop (standalone mode)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-11-jdk wget
+
+          wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+          tar -xzf hadoop-3.3.6.tar.gz
+          mv hadoop-3.3.6 $HOME/hadoop
+
+          echo "HADOOP_HOME=$HOME/hadoop" >> $GITHUB_ENV
+          echo "$HOME/hadoop/bin" >> $GITHUB_PATH
+          echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+
+      - name: Prepare sample data
+        run: |
+          echo "foo bar foo" > sample.txt
+
+      - name: Fix line endings in mapper and reducer
+        run: |
+          sed -i 's/\r$//' src/wordcount/mapper_wordcount.py
+          sed -i 's/\r$//' src/wordcount/reducer_wordcount.py
+
+      - name: Run Hadoop Streaming with WordCount (standalone)
+        run: |
+          cp src/wordcount/mapper_wordcount.py ./mapper_wordcount.py
+          cp src/wordcount/reducer_wordcount.py ./reducer_wordcount.py
+
+          hadoop jar $HOME/hadoop/share/hadoop/tools/lib/hadoop-streaming-*.jar \
+            -files mapper_wordcount.py,reducer_wordcount.py \
+            -input sample.txt \
+            -output output_dir \
+            -mapper "python3 mapper_wordcount.py" \
+            -reducer "python3 reducer_wordcount.py"
+
+      - name: Show WordCount output
+        run: |
+          cat output_dir/part-*
+  
+  post_sentiment_analysis:
+    needs: sample_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install mrjob
+          pip install pytest
+
+      - name: Run SentimentAnalysis MRJob
+        run: |
+          mkdir -p output
+          python src/sentiment_analysis_job.py -r local data/sample/sample.txt > output/output.txt
+
+      - name: Verify Output Exists
+        run: |
+          test -s output/output.txt
+          cat output/output.txt
