@@ -74,10 +74,12 @@ jobs:
 
       
       - name: Test wordcount
-        run: pytest tests/test_wordcount/*
+        run: pytest tests/test_mapper_wordcount.py
 
       - name: Test sentiment
-        run: pytest tests/test_sentiment/*
+        run: |
+          pytest tests/test_sentiment_reducer.py
+          pytest tests/test_lexicon_loader.py
 
       - name: Test utils
         run: pytest tests/test_utils/*
