@@ -18,7 +18,7 @@ def load_lexicon(path: str) -> dict[str, int]:
         
     Returns:
         dict[str, int]: Mapping of words to their sentiment scores
-        
+         
     Raises:
         FileNotFoundError: If lexicon file doesn't exist
         ValueError: If lexicon file format is invalid
