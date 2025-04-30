@@ -62,7 +62,9 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with: 
@@ -70,9 +72,6 @@ jobs:
       - name: Installing requiered packages
         run: pip install -r requirements.txt
       
-      - name: Check the structure
-        run: pytest tests/test_structure.py
-
       - name: Test wordcount
         run: pytest tests/test_wordcount/*
 

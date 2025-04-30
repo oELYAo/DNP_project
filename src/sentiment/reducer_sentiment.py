@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""
+Reducer for the Sentiment Analysis job.
+Reads (doc_id, score) pairs and emits (doc_id, sentiment_label)
+"""
+
 import sys
 import csv
 import yaml
