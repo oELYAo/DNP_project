@@ -1,3 +1,10 @@
+import os 
+import csv
+import logging
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
 def load_lexicon(path: str) -> dict[str, int]:
     """
     Returns word → sentiment score map. Unknown words default to 0.

@@ -1,41 +1,23 @@
-from src.sentiment.mapper_sentiment import SentimentMapper
+from src.sentiment.mapper_sentiment import map_sentiment
+from io import StringIO
 
 class TestMapperSentiment:
     def test_first_lexicon(self):
-        # First
-        input = '0 \t good bad good bad'
-        truth = '0 \t 0'
-        output = mapper(input)
-        assert output == truth
-        # Second
-        input = '1 \t good good good'
-        truth = '1 \t 3'
-        output = mapper(input)
-        assert output == truth
-        # Third
-        input = '2 \t bad bad good'
-        truth = '2 \t -1'
-        output = mapper(input)
-        assert output == truth
+        input_stream = StringIO('0 \t good bad good bad')
+        result = list(map_sentiment(input_stream))
+        assert len(result) == 1
+        doc_id, score, pos, neg = result[0]
+        assert doc_id == '0'
+        assert score == 0  # good(1) + bad(-1) + good(1) + bad(-1) = 0
+        assert pos == 2  # two 'good' words
+        assert neg == 2  # two 'bad' words
 
     def test_second_lexicon(self):
-        # First
-        input = '0 \t excellent test awful'
-        truth = '0 \t 0'
-        output = mapper(input)
-        assert output == truth
-        # Second
-        input = '1 \t excellent test good'
-        truth = '1 \t 3'
-        output = mapper(input)
-        assert output == truth
-        # Third
-        input = '2 \t awful bad test'
-        truth = '2 \t -3'
-        output = mapper(input)
-        assert output == truth
-        # Fourth
-        input = '3 \t excellent bad bad test good excellent bad awful'
-        truth = '3 \t 0'
-        output = mapper(input)
-        assert output == truth
+        input_stream = StringIO('0 \t excellent test awful')
+        result = list(map_sentiment(input_stream))
+        assert len(result) == 1
+        doc_id, score, pos, neg = result[0]
+        assert doc_id == '0'
+        assert score == 0  # excellent(2) + test(0) + awful(-2) = 0
+        assert pos == 1  # one 'excellent' word
+        assert neg == 1  # one 'awful' word

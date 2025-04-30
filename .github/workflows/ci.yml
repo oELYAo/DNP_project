@@ -2,7 +2,7 @@ name: CI
 on: [push]
 
 jobs:
-  files_existing:
+  file_existing:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -41,8 +41,9 @@ jobs:
           else
             echo "✅ All required files are present."
           fi
+          
   linting:
-    needs: files_existing
+    needs: file_existing
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
