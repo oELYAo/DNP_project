@@ -23,6 +23,8 @@ def load_stopwords(stopwords_file: str) -> Set[str]:
 
 
 # Tokenization function removed as data is already preprocessed
+def tokenize(text: str) -> list[str]:
+    return re.findall(r'\b\w+\b', text.lower())
 
 
 def map_wordcount(input_stream: TextIO, min_word_length: int = 1, stopwords: Set[str] = None) -> Iterator[Tuple[str, int]]:
