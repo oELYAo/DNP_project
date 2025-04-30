@@ -1,4 +1,4 @@
-from src.sentiment.mapper import mapper
+from src.sentiment.mapper_sentiment import SentimentMapper
 
 class TestMapperSentiment:
     def test_first_lexicon(self):
