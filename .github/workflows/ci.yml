@@ -138,7 +138,7 @@ jobs:
         run: |
           cat output_dir/part-*
   
-  sentiment_analysis_job:
+  post_sentiment_analysis:
     needs: sample_test
     runs-on: ubuntu-latest
     steps:
