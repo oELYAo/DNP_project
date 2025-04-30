@@ -3,7 +3,7 @@ import sys
 from typing import TextIO, Iterator, Tuple
 
 
-def reduce_wordcount(input_stream: TextIO) -> Iterator[Tuple[str, int]]:
+def reducer_wordcount(input_stream: TextIO) -> Iterator[Tuple[str, int]]:
     """Reduce function for word count.
     
     This function can be used as both a reducer and a combiner.
@@ -34,7 +34,7 @@ def reduce_wordcount(input_stream: TextIO) -> Iterator[Tuple[str, int]]:
 
 def main():
     # Process input and emit word counts
-    for word, count in reduce_wordcount(sys.stdin):
+    for word, count in reducer_wordcount(sys.stdin):
         print(f"{word}\t{count}")
 
 
